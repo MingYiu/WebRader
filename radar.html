@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2 Web Radar - Real-time</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* ========== MAIN LAYOUT ========== */
+        .main-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ========== LEFT PANEL - TEAM INFO ========== */
+        .side-panel {
+            width: 280px;
+            background: linear-gradient(135deg, rgba(15, 15, 25, 0.95) 0%, rgba(10, 10, 18, 0.98) 100%);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #2a2a3a;
+            overflow-y: auto;
+        }
+
+        .side-panel.right {
+            border-right: none;
+            border-left: 2px solid #2a2a3a;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2a3a;
+        }
+
+        .team-name {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .team-score {
+            font-size: 28px;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+
+        .side-panel.right .team-score {
+            color: #ef4444;
+        }
+
+        .team-name {
+            color: #3b82f6;
+        }
+
+        .side-panel.right .team-name {
+            color: #ef4444;
+        }
+
+        .player-card {
+            background: rgba(30, 30, 50, 0.6);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .player-card:hover {
+            background: rgba(40, 40, 70, 0.8);
+            border-color: #3a3a5a;
+        }
+
+        .player-card.dead {
+            opacity: 0.4;
+        }
+
+        .player-card.local {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .player-avatar {
+            width: 36px;
+            height: 36px;
+            background: #2a2a4a;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        .player-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .player-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-card.dead .player-name {
+            text-decoration: line-through;
+        }
+
+        .player-weapon {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .player-hp-bar {
+            width: 50px;
+            height: 6px;
+            background: #1a1a2a;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .player-hp-fill {
+            height: 100%;
+            background: #00ff88;
+            transition: width 0.2s ease;
+        }
+
+        .player-hp-fill.medium {
+            background: #ffaa00;
+        }
+
+        .player-hp-fill.low {
+            background: #ff4444;
+        }
+
+        .player-hp-text {
+            font-size: 11px;
+            color: #888;
+            margin-left: 5px;
+            min-width: 25px;
+        }
+
+        /* ========== CENTER - RADAR & INFO ========== */
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0a0a12;
+        }
+
+        /* ========== TOP BAR ========== */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 25px;
+            background: linear-gradient(180deg, rgba(20, 20, 30, 0.95) 0%, rgba(10, 10, 15, 0.9) 100%);
+            border-bottom: 2px solid #2a2a3a;
+        }
+
+        .match-info {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .info-label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-value {
+            font-size: 22px;
+            font-weight: bold;
+            font-family: 'Consolas', monospace;
+            color: #fff;
+        }
+
+        .info-value.time {
+            color: #ff6b35;
+        }
+
+        .info-value.time.bomb {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .info-value.score-ct {
+            color: #3b82f6;
+        }
+
+        .info-value.score-t {
+            color: #ef4444;
+        }
+
+        .map-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* ========== CONNECTION STATUS ========== */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .status-dot.connected {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .status-dot.disconnected {
+            background: #ff4444;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ========== RADAR CONTAINER ========== */
+        .radar-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .radar-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 900px;
+            max-height: 900px;
+            aspect-ratio: 1;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), 0 0 80px rgba(59, 130, 246, 0.1);
+            border: 2px solid #2a2a3a;
+        }
+
+        .radar-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .radar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .radar-grid {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%;
+            height: 50%;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        /* ========== PLAYER DOTS ON RADAR ========== */
+        .radar-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.05s linear;
+            pointer-events: none;
+        }
+
+        .radar-dot.ct {
+            background: #3b82f6;
+            box-shadow: 0 0 8px #3b82f6;
+        }
+
+        .radar-dot.t {
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+        }
+
+        .radar-dot.local {
+            width: 16px;
+            height: 16px;
+            background: #00ff88;
+            box-shadow: 0 0 12px #00ff88;
+        }
+
+        .radar-dot.dead {
+            opacity: 0.3;
+        }
+
+        /* ========== BOTTOM BAR ========== */
+        .bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 25px;
+            background: rgba(15, 15, 25, 0.95);
+            border-top: 1px solid #2a2a3a;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 25px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .stat-value.kills {
+            color: #00ff88;
+        }
+
+        .stat-value.deaths {
+            color: #ff6666;
+        }
+
+        .stat-value.assists {
+            color: #ffaa00;
+        }
+
+        .stat-value.mvp {
+            color: #ffd700;
+        }
+
+        .mode-indicator {
+            font-size: 11px;
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .mode-indicator.websocket {
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        /* ========== SCROLLBAR ========== */
+        .side-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .side-panel::-webkit-scrollbar-track {
+            background: #1a1a2a;
+        }
+
+        .side-panel::-webkit-scrollbar-thumb {
+            background: #3a3a5a;
+            border-radius: 3px;
+        }
+
+        .side-panel::-webkit-scrollbar-thumb:hover {
+            background: #4a4a6a;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1200px) {
+            .side-panel {
+                width: 240px;
+            }
+            .radar-wrapper {
+                max-width: 700px;
+                max-height: 700px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .side-panel {
+                width: 200px;
+            }
+            .radar-wrapper {
+                max-width: 500px;
+                max-height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- LEFT PANEL - CT TEAM -->
+        <div class="side-panel left">
+            <div class="panel-header">
+                <span class="team-name">CT</span>
+                <span class="team-score" id="ctScore">0</span>
+            </div>
+            <div id="ctPlayers"></div>
+        </div>
+
+        <!-- CENTER PANEL -->
+        <div class="center-panel">
+            <!-- TOP BAR -->
+            <div class="top-bar">
+                <div class="match-info">
+                    <div class="info-item">
+                        <span class="info-label">Round</span>
+                        <span class="info-value" id="roundNumber">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Time</span>
+                        <span class="info-value time" id="roundTime">1:45</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Map</span>
+                        <span class="map-name" id="mapName">DUST 2</span>
+                    </div>
+                </div>
+                <div class="connection-status">
+                    <div class="status-dot disconnected" id="statusDot"></div>
+                    <span id="statusText">Connecting...</span>
+                </div>
+            </div>
+
+            <!-- RADAR -->
+            <div class="radar-container">
+                <div class="radar-wrapper">
+                    <canvas id="radarCanvas" class="radar-canvas"></canvas>
+                    <div class="radar-overlay" id="radarOverlay">
+                        <div id="debugInfo" style="position:absolute;top:10px;left:10px;color:#00ff00;font-family:monospace;font-size:14px;font-weight:bold;background:rgba(0,0,0,0.9);padding:10px;border:1px solid #00ff00;line-height:1.4;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM BAR -->
+            <div class="bottom-bar">
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-label">K</span>
+                        <span class="stat-value kills" id="statKills">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">D</span>
+                        <span class="stat-value deaths" id="statDeaths">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">A</span>
+                        <span class="stat-value assists" id="statAssists">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">MVP</span>
+                        <span class="stat-value mvp" id="statMVP">0</span>
+                    </div>
+                </div>
+                <div class="mode-indicator websocket" id="modeIndicator">
+                    WebSocket Real-time
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL - T TEAM -->
+        <div class="side-panel right">
+            <div class="panel-header">
+                <span class="team-name">T</span>
+                <span class="team-score" id="tScore">0</span>
+            </div>
+            <div id="tPlayers"></div>
+        </div>
+    </div>
+
+    <!-- Load map configs -->
+    <script src="map_configs.js"></script>
+
+    <script>
+        // ========== CONFIG ==========
+        const WS_URL = 'ws://127.0.0.1:8765';
+        const HTTP_URL = '/data';  // Fallback
+
+        // ========== STATE ==========
+        let matchData = {
+            players: [],
+            map_name: 'de_dust2',
+            round_time: 105,
+            bomb_time: 0,
+            bomb_planted: false,
+            phase: 'live',
+            round_number: 0,
+            team_score: 0,
+            enemy_score: 0,
+            stats: { kills: 0, deaths: 0, assists: 0, mvp: 0 }
+        };
+
+        let radarConfig = {
+            pos_x: -2400,
+            pos_y: 3380,
+            scale: 4.4,
+            rotate: 0,
+            width: 1024,
+            height: 1024
+        };
+
+        let ws = null;
+        let wsConnected = false;
+        let lastUpdateTime = 0;
+        let frameId = null;
+
+        // ========== DOM ELEMENTS ==========
+        const elements = {
+            radarCanvas: document.getElementById('radarCanvas'),
+            radarOverlay: document.getElementById('radarOverlay'),
+            ctPlayers: document.getElementById('ctPlayers'),
+            tPlayers: document.getElementById('tPlayers'),
+            ctScore: document.getElementById('ctScore'),
+            tScore: document.getElementById('tScore'),
+            roundNumber: document.getElementById('roundNumber'),
+            roundTime: document.getElementById('roundTime'),
+            mapName: document.getElementById('mapName'),
+            statusDot: document.getElementById('statusDot'),
+            statusText: document.getElementById('statusText'),
+            statKills: document.getElementById('statKills'),
+            statDeaths: document.getElementById('statDeaths'),
+            statAssists: document.getElementById('statAssists'),
+            statMVP: document.getElementById('statMVP'),
+            modeIndicator: document.getElementById('modeIndicator')
+        };
+
+        const ctx = elements.radarCanvas.getContext('2d');
+        let mapImage = new Image();
+
+        // ========== WEAPON CODES ==========
+        const WEAPON_CODES = {
+            'ak47': 'AK', 'm4a1': 'M4', 'm4a1_silencer': 'M4S',
+            'awp': 'AWP', 'awp': 'AWP', 'ssg08': 'SSG',
+            'deagle': 'DGL', 'revolver': 'REV',
+            'knife': 'KN', 'knife_t': 'KN',
+            'glock': 'GLK', 'usp_silencer': 'USP',
+            'p250': 'P25', 'fiveseven': '57',
+            'ump45': 'UMP', 'mp9': 'MP9', 'mp7': 'MP7', 'mac10': 'MAC',
+            'galilar': 'GAL', 'famas': 'FAM',
+            'sg556': 'SG', 'aug': 'AUG',
+            'g3sg1': 'G3', 'scar20': 'SCR',
+            'negev': 'NEG', 'm249': 'M24',
+            'nova': 'NOV', 'xm1014': 'XM', 'mag7': 'MAG',
+            'default': 'WP'
+        };
+
+        function getWeaponCode(weapon) {
+            if (!weapon) return '---';
+            const lower = weapon.toLowerCase();
+            for (const [key, code] of Object.entries(WEAPON_CODES)) {
+                if (lower.includes(key)) return code;
+            }
+            return 'WP';
+        }
+
+        // ========== WEBSOCKET CONNECTION ==========
+        function connectWebSocket() {
+            try {
+                ws = new WebSocket(WS_URL);
+
+                ws.onopen = () => {
+                    console.log('[WS] Connected!');
+                    wsConnected = true;
+                    updateConnectionStatus(true);
+                    elements.modeIndicator.textContent = 'WebSocket Real-time';
+                    elements.modeIndicator.classList.add('websocket');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleGameData(data);
+                    } catch (e) {
+                        console.error('[WS] Parse error:', e);
+                    }
+                };
+
+                ws.onclose = () => {
+                    console.log('[WS] Disconnected');
+                    wsConnected = false;
+                    updateConnectionStatus(false);
+                    
+                    // Reconnect after 2 seconds
+                    setTimeout(connectWebSocket, 2000);
+                };
+
+                ws.onerror = (error) => {
+                    console.error('[WS] Error:', error);
+                    wsConnected = false;
+                    updateConnectionStatus(false);
+                };
+
+            } catch (e) {
+                console.error('[WS] Connection failed:', e);
+                setTimeout(connectWebSocket, 3000);
+            }
+        }
+
+        // ========== FALLBACK: HTTP POLLING ==========
+        async function fetchData() {
+            try {
+                const response = await fetch(HTTP_URL);
+                if (response.ok) {
+                    const data = await response.json();
+                    handleGameData(data);
+                    updateConnectionStatus(true);
+                }
+            } catch (e) {
+                console.error('[HTTP] Fetch error:', e);
+                updateConnectionStatus(false);
+            }
+        }
+
+        function startHTTPPolling() {
+            console.log('[HTTP] Falling back to polling mode');
+            elements.modeIndicator.textContent = 'HTTP Polling';
+            elements.modeIndicator.classList.remove('websocket');
+            setInterval(fetchData, 100); // 10 FPS fallback
+        }
+
+        // ========== DATA HANDLER ==========
+        function handleGameData(data) {
+            console.log('[Radar] handleGameData called:', JSON.stringify(data).substring(0, 200));
+            
+            // Update match data
+            if (data.players) matchData.players = data.players;
+            if (data.map_name) {
+                matchData.map_name = data.map_name;
+                updateMapDisplay(data.map_name);
+                loadMapImage(data.map_name);
+            }
+            if (data.round_time !== undefined) matchData.round_time = data.round_time;
+            if (data.bomb_time !== undefined) matchData.bomb_time = data.bomb_time;
+            if (data.bomb_planted !== undefined) matchData.bomb_planted = data.bomb_planted;
+            if (data.phase) matchData.phase = data.phase;
+            if (data.round_number) matchData.round_number = data.round_number;
+            if (data.team_score !== undefined) matchData.team_score = data.team_score;
+            if (data.enemy_score !== undefined) matchData.enemy_score = data.enemy_score;
+            if (data.stats) matchData.stats = data.stats;
+            if (data.local_player) matchData.local_player = data.local_player;
+
+            // Update UI
+            updateUI();
+            lastUpdateTime = performance.now();
+        }
+
+        // ========== UPDATE UI ==========
+        function updateUI() {
+            // Scores
+            elements.ctScore.textContent = matchData.team_score;
+            elements.tScore.textContent = matchData.enemy_score;
+
+            // Round info
+            elements.roundNumber.textContent = matchData.round_number || '?';
+
+            // Timer
+            const time = matchData.bomb_planted ? matchData.bomb_time : matchData.round_time;
+            const minutes = Math.floor(time / 60);
+            const seconds = Math.floor(time % 60);
+            elements.roundTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            elements.roundTime.classList.toggle('bomb', matchData.bomb_planted);
+
+            // Stats
+            const stats = matchData.stats || {};
+            elements.statKills.textContent = stats.kills || 0;
+            elements.statDeaths.textContent = stats.deaths || 0;
+            elements.statAssists.textContent = stats.assists || 0;
+            elements.statMVP.textContent = stats.mvp || 0;
+
+            // Player lists
+            updatePlayerLists();
+        }
+
+        function updatePlayerLists() {
+            const ctList = [];
+            const tList = [];
+
+            matchData.players.forEach(player => {
+                if (player.is_team) {
+                    ctList.push(player);
+                } else {
+                    tList.push(player);
+                }
+            });
+
+            // Sort: local first, then alive first
+            const sortFn = (a, b) => {
+                if (a.is_local) return -1;
+                if (b.is_local) return 1;
+                if (a.is_alive !== b.is_alive) return b.is_alive - a.is_alive;
+                return (a.name || '').localeCompare(b.name || '');
+            };
+
+            ctList.sort(sortFn);
+            tList.sort(sortFn);
+
+            elements.ctPlayers.innerHTML = ctList.map(p => createPlayerCardHTML(p, 'ct')).join('');
+            elements.tPlayers.innerHTML = tList.map(p => createPlayerCardHTML(p, 't')).join('');
+        }
+
+        function createPlayerCardHTML(player, team) {
+            const hp = player.hp || 0;
+            const hpClass = hp > 66 ? '' : hp > 33 ? 'medium' : 'low';
+            const weapon = getWeaponCode(player.weapon);
+
+            return `
+                <div class="player-card ${!player.is_alive ? 'dead' : ''} ${player.is_local ? 'local' : ''}">
+                    <div class="player-avatar">${weapon}</div>
+                    <div class="player-info">
+                        <div class="player-name">${player.name || 'Player'}</div>
+                        <div class="player-weapon">${player.weapon || 'Unknown'}</div>
+                    </div>
+                    <div class="player-hp-bar">
+                        <div class="player-hp-fill ${hpClass}" style="width: ${hp}%"></div>
+                    </div>
+                    <span class="player-hp-text">${hp}</span>
+                </div>
+            `;
+        }
+
+        function updateConnectionStatus(connected) {
+            elements.statusDot.classList.toggle('connected', connected);
+            elements.statusDot.classList.toggle('disconnected', !connected);
+            elements.statusText.textContent = connected ? 'Connected' : 'Disconnected';
+        }
+
+        // ========== MAP HANDLING ==========
+        function getMapId(mapName) {
+            if (!mapName) return 'de_dust2';
+            // Remove common prefixes/suffixes
+            let id = mapName.toLowerCase()
+                .replace('maps/', '')
+                .replace('.vpk', '')
+                .replace('workshop/', '');
+            // Handle workshop maps
+            if (id.match(/^\d+$/)) return 'de_dust2'; // Workshop ID fallback
+            return id;
+        }
+
+        function getMapConfig(mapId) {
+            return MAPS[mapId] || null;
+        }
+
+        function updateMapDisplay(mapName) {
+            if (!mapName) return;
+            const displayName = mapName
+                .replace('maps/', '')
+                .replace('.vpk', '')
+                .replace(/_/g, ' ')
+                .toUpperCase();
+            elements.mapName.textContent = displayName;
+        }
+
+        function loadMapImage(mapName) {
+            const mapId = getMapId(mapName);
+            const config = getMapConfig(mapId);
+            console.log('[Radar] loadMapImage:', { mapName, mapId, config });
+
+            if (config) {
+                radarConfig = {
+                    pos_x: config.pos_x,
+                    pos_y: config.pos_y,
+                    scale: config.scale,
+                    rotate: config.rotate || 0,
+                    width: config.width,
+                    height: config.height
+                };
+
+                mapImage.onload = () => {
+                    console.log('[Radar] Map image loaded successfully');
+                    resizeCanvas();
+                };
+                mapImage.onerror = () => {
+                    console.error('[Radar] Map image FAILED to load:', 'image/' + config.file);
+                };
+                mapImage.src = 'image/' + config.file;
+            } else {
+                console.warn('[Radar] No config found for mapId:', mapId);
+            }
+        }
+
+        // ========== CANVAS & RADAR ==========
+        function resizeCanvas() {
+            const wrapper = elements.radarCanvas.parentElement;
+            const size = Math.min(wrapper.clientWidth, wrapper.clientHeight);
+            
+            elements.radarCanvas.width = size;
+            elements.radarCanvas.height = size;
+            
+            // Note: render loop continues via requestAnimationFrame, no need to restart
+        }
+
+        function gameToCanvas(gameX, gameY) {
+            let rawX, rawY;
+
+            // Handle rotation for maps like de_nuke, de_vertigo
+            if (radarConfig.rotate === 1) {
+                // Rotate 90 degrees clockwise: swap X/Y and adjust signs
+                rawX = (gameY - radarConfig.pos_y) / radarConfig.scale;
+                rawY = (radarConfig.pos_x - gameX) / radarConfig.scale;
+            } else {
+                rawX = (gameX - radarConfig.pos_x) / radarConfig.scale;
+                rawY = (radarConfig.pos_y - gameY) / radarConfig.scale;
+            }
+
+            // Scale to actual canvas size
+            const scaleX = elements.radarCanvas.width / radarConfig.width;
+            const scaleY = elements.radarCanvas.height / radarConfig.height;
+
+            return {
+                x: rawX * scaleX,
+                y: rawY * scaleY
+            };
+        }
+
+        function render() {
+            const canvas = elements.radarCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            // Clear
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw map image if loaded
+            if (mapImage.complete && mapImage.naturalWidth > 0) {
+                ctx.drawImage(mapImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                // Draw placeholder
+                ctx.fillStyle = '#333';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px monospace';
+                ctx.fillText('Map: ' + (getMapConfig(getMapId()).name || 'Loading...'), 10, 20);
+            }
+
+            // Draw grid
+            drawGrid(ctx, canvas);
+
+            // Draw players
+            drawPlayers(ctx, canvas);
+
+            // Continue loop
+            frameId = requestAnimationFrame(render);
+        }
+
+        function drawGrid(ctx, canvas) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+
+            // Grid lines
+            const gridSize = canvas.width / 4;
+            for (let i = 1; i < 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(gridSize * i, 0);
+                ctx.lineTo(gridSize * i, canvas.height);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(0, gridSize * i);
+                ctx.lineTo(canvas.width, gridSize * i);
+                ctx.stroke();
+            }
+
+            // Center crosshair
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.2)';
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+        }
+
+        function drawPlayers(ctx, canvas) {
+            const debugInfo = document.getElementById('debugInfo');
+            const localPlayer = matchData.players.find(p => p.is_local);
+            
+            // Show debug info
+            if (localPlayer && debugInfo) {
+                debugInfo.innerHTML = `pos_x:${radarConfig.pos_x}<br>pos_y:${radarConfig.pos_y}<br>scale:${radarConfig.scale}<br>rotate:${radarConfig.rotate}<br>gameX:${localPlayer.x?.toFixed(0)}<br>gameY:${localPlayer.y?.toFixed(0)}`;
+            }
+            
+            matchData.players.forEach(player => {
+                if (!player.x || !player.y) return;
+
+                const pos = gameToCanvas(player.x, player.y);
+
+                // Check bounds
+                if (pos.x < 0 || pos.x > canvas.width || pos.y < 0 || pos.y > canvas.height) {
+                    return;
+                }
+
+                // Determine color
+                let color, glowColor, radius;
+                if (player.is_local) {
+                    color = '#00ff88';
+                    glowColor = 'rgba(0, 255, 136, 0.5)';
+                    radius = 8;
+                } else if (player.is_team) {
+                    color = '#3b82f6';
+                    glowColor = 'rgba(59, 130, 246, 0.5)';
+                    radius = 6;
+                } else {
+                    color = '#ef4444';
+                    glowColor = 'rgba(239, 68, 68, 0.5)';
+                    radius = 6;
+                }
+
+                // Glow
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, radius + 4, 0, Math.PI * 2);
+                ctx.fillStyle = glowColor;
+                ctx.fill();
+
+                // Dot
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = player.is_alive ? color : 'rgba(100, 100, 100, 0.3)';
+                ctx.fill();
+
+                // Direction indicator for local player
+                if (player.is_local && player.angle && player.is_alive) {
+                    const angleRad = (player.angle * Math.PI) / 180;
+                    const lineLength = radius + 12;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(pos.x, pos.y);
+                    ctx.lineTo(
+                        pos.x + Math.sin(angleRad) * lineLength,
+                        pos.y - Math.cos(angleRad) * lineLength
+                    );
+                    ctx.strokeStyle = '#00ff88';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        // ========== INIT ==========
+        function init() {
+            // Set initial map
+            loadMapImage(matchData.map_name);
+
+            // Start WebSocket connection
+            connectWebSocket();
+            
+            // Start render loop
+            render();
+
+            // Set up resize handler (this will call resizeCanvas -> render)
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            // Fallback: if no WS connection in 3 seconds, use HTTP polling
+            setTimeout(() => {
+                if (!wsConnected) {
+                    startHTTPPolling();
+                }
+            }, 3000);
+
+            // Update timers
+            setInterval(() => {
+                if (matchData.round_time > 0) {
+                    if (matchData.bomb_planted) {
+                        matchData.bomb_time = Math.max(0, matchData.bomb_time - 1);
+                    } else {
+                        matchData.round_time = Math.max(0, matchData.round_time - 1);
+                    }
+                    updateUI();
+                }
+            }, 1000);
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

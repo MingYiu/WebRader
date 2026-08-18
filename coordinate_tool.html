@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>坐标转换调试工具 - CS2 Web Radar</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        h1 {
+            color: #00d4ff;
+            border-bottom: 2px solid #00d4ff;
+            padding-bottom: 10px;
+        }
+        .card {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #aaa;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            background: #0f3460;
+            color: #fff;
+            font-size: 16px;
+        }
+        button {
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #00a8cc;
+        }
+        .result {
+            background: #0f3460;
+            border-left: 4px solid #00d4ff;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+        .canvas-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            border: 2px solid #00d4ff;
+            background: #000;
+            margin: 20px 0;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: #ff0055;
+            box-shadow: 0 0 10px #ff0055;
+            pointer-events: none;
+        }
+        .dot.local {
+            background: #00ff88;
+            box-shadow: 0 0 15px #00ff88;
+            width: 16px;
+            height: 16px;
+        }
+        .instructions {
+            background: #1a1a2e;
+            border: 1px dashed #444;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .instructions code {
+            background: #0f3460;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #00d4ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗺️ CS2 坐标转换调试工具</h1>
+    
+    <div class="instructions">
+        <strong>使用方法：</strong>
+        <ol>
+            <li>使用 <strong>VRF 工具</strong>从 CS2 VPK 中提取官方校准数据</li>
+            <li>路径：<code>resource/overviews/de_dust2.txt</code></li>
+            <li>找到 <code>pos_x</code>, <code>pos_y</code>, <code>scale</code> 值</li>
+            <li>填入下方表单测试坐标转换</li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <h2>📍 地图配置</h2>
+        <label>地图</label>
+        <select id="mapSelect">
+            <option value="de_dust2">Dust 2</option>
+            <option value="de_mirage">Mirage</option>
+            <option value="de_inferno">Inferno</option>
+            <option value="de_nuke">Nuke</option>
+            <option value="de_overpass">Overpass</option>
+            <option value="de_ancient">Ancient</option>
+            <option value="de_vertigo">Vertigo</option>
+            <option value="de_cache">Cache</option>
+        </select>
+        
+        <label>pos_x (左上角 X)</label>
+        <input type="number" id="posX" value="-2400">
+        
+        <label>pos_y (左上角 Y)</label>
+        <input type="number" id="posY" value="3380">
+        
+        <label>scale (1像素 = ? 单位)</label>
+        <input type="number" id="scale" value="4.4" step="0.1">
+        
+        <label>图片尺寸 (像素)</label>
+        <input type="number" id="imgWidth" value="1024">
+        <input type="number" id="imgHeight" value="1024">
+    </div>
+
+    <div class="card">
+        <h2>🎮 测试玩家坐标</h2>
+        <label>玩家 X (游戏世界)</label>
+        <input type="number" id="playerX" value="700">
+        
+        <label>玩家 Y (游戏世界)</label>
+        <input type="number" id="playerY" value="2700">
+        
+        <button onclick="calculate()">计算并显示</button>
+    </div>
+
+    <div class="card">
+        <h2>📊 转换结果</h2>
+        <div class="result">
+            <strong>游戏坐标:</strong> (<span id="resultGameX">700</span>, <span id="resultGameY">2700</span>)<br>
+            <strong>像素坐标:</strong> (<span id="resultPixelX">0</span>, <span id="resultPixelY">0</span>)<br>
+            <strong>百分比:</strong> (<span id="resultPercentX">0</span>%, <span id="resultPercentY">0</span>%)
+        </div>
+        
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="radarCanvas" width="400" height="400"></canvas>
+            <div class="dot local" id="playerDot" style="left: 50%; top: 50%;"></div>
+        </div>
+        
+        <div class="result">
+            <strong>调试信息:</strong><br>
+            <code id="debugInfo"></code>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 常用地标坐标 (Dust 2)</h2>
+        <button onclick="setPosition(1050, 2800, 'CT Spawn')">CT Spawn</button>
+        <button onclick="setPosition(-1700, -500, 'T Spawn')">T Spawn</button>
+        <button onclick="setPosition(700, 2700, 'A Site')">A Site</button>
+        <button onclick="setPosition(-1250, 210, 'B Site')">B Site</button>
+        <button onclick="setPosition(0, 0, 'Mid')">Mid</button>
+        <button onclick="setPosition(1500, 1000, 'Upper Tunnel')">Upper Tunnel</button>
+        <button onclick="setPosition(-800, 1500, 'Lower Tunnel')">Lower Tunnel</button>
+    </div>
+
+    <script>
+        // CS2 坐标转换
+        function gameToRadar(gameX, gameY, config) {
+            const pixelX = (gameX - config.pos_x) / config.scale;
+            const pixelY = (config.pos_y - gameY) / config.scale;
+            return {
+                x: pixelX,
+                y: pixelY,
+                percentX: (pixelX / config.width) * 100,
+                percentY: (pixelY / config.height) * 100
+            };
+        }
+
+        function calculate() {
+            const config = {
+                pos_x: parseFloat(document.getElementById('posX').value),
+                pos_y: parseFloat(document.getElementById('posY').value),
+                scale: parseFloat(document.getElementById('scale').value),
+                width: parseFloat(document.getElementById('imgWidth').value),
+                height: parseFloat(document.getElementById('imgHeight').value)
+            };
+            
+            const playerX = parseFloat(document.getElementById('playerX').value);
+            const playerY = parseFloat(document.getElementById('playerY').value);
+            
+            const result = gameToRadar(playerX, playerY, config);
+            
+            document.getElementById('resultGameX').textContent = playerX;
+            document.getElementById('resultGameY').textContent = playerY;
+            document.getElementById('resultPixelX').textContent = result.x.toFixed(2);
+            document.getElementById('resultPixelY').textContent = result.y.toFixed(2);
+            document.getElementById('resultPercentX').textContent = result.percentX.toFixed(2);
+            document.getElementById('resultPercentY').textContent = result.percentY.toFixed(2);
+            
+            // 更新点位置
+            const dot = document.getElementById('playerDot');
+            dot.style.left = `${Math.max(0, Math.min(100, result.percentX))}%`;
+            dot.style.top = `${Math.max(0, Math.min(100, result.percentY))}%`;
+            
+            // 绘制网格
+            drawGrid();
+            
+            // 调试信息
+            const debugInfo = `
+公式: 
+  pixelX = (playerX - pos_x) / scale
+       = (${playerX} - ${config.pos_x}) / ${config.scale}
+       = ${result.x.toFixed(2)}
+       
+  pixelY = (pos_y - playerY) / scale
+         = (${config.pos_y} - ${playerY}) / ${config.scale}
+         = ${result.y.toFixed(2)}
+         
+边界检查:
+  X: 0 <= ${result.percentX.toFixed(2)}% <= 100 → ${result.percentX >= 0 && result.percentX <= 100 ? '✓ 在范围内' : '✗ 超出范围'}
+  Y: 0 <= ${result.percentY.toFixed(2)}% <= 100 → ${result.percentY >= 0 && result.percentY <= 100 ? '✓ 在范围内' : '✗ 超出范围'}
+            `.trim();
+            document.getElementById('debugInfo').textContent = debugInfo;
+        }
+
+        function setPosition(x, y, name) {
+            document.getElementById('playerX').value = x;
+            document.getElementById('playerY').value = y;
+            calculate();
+        }
+
+        function drawGrid() {
+            const canvas = document.getElementById('radarCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            ctx.fillStyle = '#0a0a15';
+            ctx.fillRect(0, 0, w, h);
+            
+            // 绘制网格
+            ctx.strokeStyle = '#1a3a5c';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= 4; i++) {
+                const x = (w / 4) * i;
+                const y = (h / 4) * i;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+            
+            // 中心十字
+            ctx.strokeStyle = '#00d4ff44';
+            ctx.beginPath();
+            ctx.moveTo(w/2, 0);
+            ctx.lineTo(w/2, h);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, h/2);
+            ctx.lineTo(w, h/2);
+            ctx.stroke();
+        }
+
+        // 地图切换时自动更新配置
+        document.getElementById('mapSelect').addEventListener('change', function() {
+            const configs = {
+                'de_dust2': { pos_x: -2400, pos_y: 3380, scale: 4.4, file: 'de_dust2_radar.png' },
+                'de_mirage': { pos_x: -3200, pos_y: 2100, scale: 5.0, file: 'de_mirage_radar.png' },
+                'de_inferno': { pos_x: -2600, pos_y: 3300, scale: 4.5, file: 'de_inferno_radar.png' },
+                'de_nuke': { pos_x: -2800, pos_y: 2800, scale: 4.0, file: 'de_nuke_radar.png' },
+                'de_overpass': { pos_x: -3200, pos_y: 3200, scale: 4.5, file: 'de_overpass_radar.png' },
+                'de_ancient': { pos_x: -2700, pos_y: 2700, scale: 4.5, file: 'de_ancient_radar.png' },
+                'de_vertigo': { pos_x: -2400, pos_y: 2400, scale: 4.5, file: 'de_vertigo_radar.png' },
+                'de_cache': { pos_x: -2400, pos_y: 2400, scale: 4.5, file: 'de_cache_radar.png' }
+            };
+            
+            const config = configs[this.value];
+            document.getElementById('posX').value = config.pos_x;
+            document.getElementById('posY').value = config.pos_y;
+            document.getElementById('scale').value = config.scale;
+            calculate();
+        });
+
+        // 初始化
+        drawGrid();
+        calculate();
+    </script>
+</body>
+</html>

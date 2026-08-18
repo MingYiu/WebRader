@@ -1,0 +1,12 @@
+{
+  "name": "cs2-web-radar",
+  "version": "2.0.0",
+  "description": "CS2 Web Radar - UDP + WebSocket Real-time Broadcasting",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}
