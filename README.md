@@ -26,7 +26,22 @@ node server.js
 
 ### 4. 打开雷达页面
 
-浏览器访问: http://localhost:8080
+本地：浏览器访问: http://localhost:8080
+
+线上 (GitHub Pages)：浏览 https://mingyiu.github.io/WebRader/
+
+## GitHub Pages 部署
+
+仓库使用 `web_radar/` 子目录作为 Pages source。
+
+- `index.html` —— 自动跳转到 `radar.html`(GitHub Pages 默认入口)
+- `radar.html` —— 雷达主页
+- `coordinate_tool.html` —— 坐标调试工具
+- `map_configs.js` —— 地图坐标配置
+- `server.js` —— Node.js 中转服务器(本地用,不需要部署到 Pages)
+- `aimware_client.lua` —— Aimware Lua 客户端脚本(本地用,不需要部署到 Pages)
+
+Pages 部署的文件清单:`index.html`、`radar.html`、`coordinate_tool.html`、`map_configs.js`、`image/`(地图资源)。其它文件可保留在仓库不被 Pages 加载,需要时手动 clone 后 `npm install` 跑服务端。
 
 ## 技术架构
 

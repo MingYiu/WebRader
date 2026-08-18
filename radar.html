@@ -59,16 +59,6 @@
             letter-spacing: 2px;
         }
 
-        .team-score {
-            font-size: 28px;
-            font-weight: bold;
-            color: #3b82f6;
-        }
-
-        .side-panel.right .team-score {
-            color: #ef4444;
-        }
-
         .team-name {
             color: #3b82f6;
         }
@@ -95,12 +85,13 @@
         }
 
         .player-card.dead {
-            opacity: 0.4;
+            opacity: 0.55;
+            background: rgba(80, 80, 80, 0.3);
+            filter: grayscale(0.7);
         }
 
         .player-card.local {
-            border-color: #00ff88;
-            background: rgba(0, 255, 136, 0.1);
+            background: rgba(0, 255, 136, 0.08);
         }
 
         .player-avatar {
@@ -111,9 +102,52 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: bold;
-            color: #aaa;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .player-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .player-avatar .avatar-letter {
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+        }
+
+        .player-avatar.is-bot {
+            background: linear-gradient(135deg, #4a3a5a, #2a2a4a);
+            color: #c98aff;
+        }
+
+        .player-avatar.t-team {
+            background: linear-gradient(135deg, #2a4a6a, #1a3a5a);
+        }
+
+        .player-avatar.ct-team {
+            background: linear-gradient(135deg, #4a2a2a, #3a1a1a);
+        }
+
+        .steam-link {
+            color: #6699cc;
+            text-decoration: none;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .steam-link:hover {
+            opacity: 1;
+            text-decoration: underline;
         }
 
         .player-info {
@@ -131,41 +165,26 @@
 
         .player-card.dead .player-name {
             text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .dead-marker {
+            display: inline-block;
+            background: #b91c1c;
+            color: white;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 6px;
+            vertical-align: middle;
+            letter-spacing: 0.5px;
         }
 
         .player-weapon {
             font-size: 10px;
             color: #888;
             text-transform: uppercase;
-        }
-
-        .player-hp-bar {
-            width: 50px;
-            height: 6px;
-            background: #1a1a2a;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .player-hp-fill {
-            height: 100%;
-            background: #00ff88;
-            transition: width 0.2s ease;
-        }
-
-        .player-hp-fill.medium {
-            background: #ffaa00;
-        }
-
-        .player-hp-fill.low {
-            background: #ff4444;
-        }
-
-        .player-hp-text {
-            font-size: 11px;
-            color: #888;
-            margin-left: 5px;
-            min-width: 25px;
         }
 
         /* ========== CENTER - RADAR & INFO ========== */
@@ -210,28 +229,6 @@
             font-weight: bold;
             font-family: 'Consolas', monospace;
             color: #fff;
-        }
-
-        .info-value.time {
-            color: #ff6b35;
-        }
-
-        .info-value.time.bomb {
-            color: #ef4444;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .info-value.score-ct {
-            color: #3b82f6;
-        }
-
-        .info-value.score-t {
-            color: #ef4444;
         }
 
         .map-name {
@@ -343,62 +340,24 @@
         }
 
         .radar-dot.local {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             background: #00ff88;
             box-shadow: 0 0 12px #00ff88;
         }
 
         .radar-dot.dead {
-            opacity: 0.3;
+            opacity: 0.5;
         }
 
         /* ========== BOTTOM BAR ========== */
         .bottom-bar {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             padding: 10px 25px;
             background: rgba(15, 15, 25, 0.95);
             border-top: 1px solid #2a2a3a;
-        }
-
-        .stats-row {
-            display: flex;
-            gap: 25px;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: #666;
-        }
-
-        .stat-value {
-            font-size: 14px;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        .stat-value.kills {
-            color: #00ff88;
-        }
-
-        .stat-value.deaths {
-            color: #ff6666;
-        }
-
-        .stat-value.assists {
-            color: #ffaa00;
-        }
-
-        .stat-value.mvp {
-            color: #ffd700;
         }
 
         .mode-indicator {
@@ -462,7 +421,6 @@
         <div class="side-panel left">
             <div class="panel-header">
                 <span class="team-name">CT</span>
-                <span class="team-score" id="ctScore">0</span>
             </div>
             <div id="ctPlayers"></div>
         </div>
@@ -472,14 +430,6 @@
             <!-- TOP BAR -->
             <div class="top-bar">
                 <div class="match-info">
-                    <div class="info-item">
-                        <span class="info-label">Round</span>
-                        <span class="info-value" id="roundNumber">0</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Time</span>
-                        <span class="info-value time" id="roundTime">1:45</span>
-                    </div>
                     <div class="info-item">
                         <span class="info-label">Map</span>
                         <span class="map-name" id="mapName">DUST 2</span>
@@ -496,31 +446,12 @@
                 <div class="radar-wrapper">
                     <canvas id="radarCanvas" class="radar-canvas"></canvas>
                     <div class="radar-overlay" id="radarOverlay">
-                        <div id="debugInfo" style="position:absolute;top:10px;left:10px;color:#00ff00;font-family:monospace;font-size:14px;font-weight:bold;background:rgba(0,0,0,0.9);padding:10px;border:1px solid #00ff00;line-height:1.4;"></div>
                     </div>
                 </div>
             </div>
 
             <!-- BOTTOM BAR -->
             <div class="bottom-bar">
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <span class="stat-label">K</span>
-                        <span class="stat-value kills" id="statKills">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">D</span>
-                        <span class="stat-value deaths" id="statDeaths">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">A</span>
-                        <span class="stat-value assists" id="statAssists">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">MVP</span>
-                        <span class="stat-value mvp" id="statMVP">0</span>
-                    </div>
-                </div>
                 <div class="mode-indicator websocket" id="modeIndicator">
                     WebSocket Real-time
                 </div>
@@ -531,7 +462,6 @@
         <div class="side-panel right">
             <div class="panel-header">
                 <span class="team-name">T</span>
-                <span class="team-score" id="tScore">0</span>
             </div>
             <div id="tPlayers"></div>
         </div>
@@ -549,14 +479,7 @@
         let matchData = {
             players: [],
             map_name: 'de_dust2',
-            round_time: 105,
-            bomb_time: 0,
-            bomb_planted: false,
-            phase: 'live',
-            round_number: 0,
-            team_score: 0,
-            enemy_score: 0,
-            stats: { kills: 0, deaths: 0, assists: 0, mvp: 0 }
+            local_team: 0
         };
 
         let radarConfig = {
@@ -579,17 +502,9 @@
             radarOverlay: document.getElementById('radarOverlay'),
             ctPlayers: document.getElementById('ctPlayers'),
             tPlayers: document.getElementById('tPlayers'),
-            ctScore: document.getElementById('ctScore'),
-            tScore: document.getElementById('tScore'),
-            roundNumber: document.getElementById('roundNumber'),
-            roundTime: document.getElementById('roundTime'),
             mapName: document.getElementById('mapName'),
             statusDot: document.getElementById('statusDot'),
             statusText: document.getElementById('statusText'),
-            statKills: document.getElementById('statKills'),
-            statDeaths: document.getElementById('statDeaths'),
-            statAssists: document.getElementById('statAssists'),
-            statMVP: document.getElementById('statMVP'),
             modeIndicator: document.getElementById('modeIndicator')
         };
 
@@ -618,6 +533,31 @@
             const lower = weapon.toLowerCase();
             for (const [key, code] of Object.entries(WEAPON_CODES)) {
                 if (lower.includes(key)) return code;
+            }
+            // CS2 numeric fallback (m_iItemDefinitionIndex -> "weapon_28")
+            // Map common def_index values to short codes
+            const numeric = weapon.match(/^weapon_(\d+)$/);
+            if (numeric) {
+                const defIdx = parseInt(numeric[1]);
+                const defMap = {
+                    1: 'DZ', 2: 'DZS', 3: 'BR', 4: 'GLK', 7: 'ACP',
+                    8: 'BM', 9: 'NOVA', 10: 'XM', 11: 'MAC', 13: 'MAG',
+                    14: 'MP9', 16: 'MP7', 17: 'UMP', 19: 'P90', 23: 'MP5',
+                    24: 'UMP', 25: 'XM', 26: 'PP', 27: 'MAG', 28: 'NEG',
+                    29: 'M249', 30: 'TEC', 32: 'P2000', 33: 'USP', 34: 'P250',
+                    36: 'P250', 38: 'SCOUT', 39: 'SSG', 40: 'AWP', 41: 'SG',
+                    42: 'AUG', 43: 'M249', 44: 'NEG', 45: 'GAL', 46: 'FAM',
+                    47: 'AK', 48: 'M4', 49: 'M4S', 50: 'M249', 51: 'DGL',
+                    52: 'DGL', 53: 'REV', 54: 'REV', 55: 'DGL', 56: 'DGL',
+                    59: 'KN', 60: 'KN', 61: 'USP', 63: 'CZ', 64: 'CZ',
+                    500: 'SH', 503: 'SSG', 505: 'SSG', 506: 'SG', 507: 'GAL',
+                    508: 'AK', 509: 'SG', 510: 'AUG', 511: 'AUG', 512: 'AUG',
+                    514: 'AWP', 515: 'AWP', 516: 'SCR', 517: 'G3', 518: 'SCR',
+                    519: 'G3', 520: 'M249', 521: 'NEG', 522: 'M249', 523: 'NEG',
+                    525: 'TEC', 526: 'PP'
+                };
+                if (defMap[defIdx]) return defMap[defIdx];
+                return 'W' + defIdx;
             }
             return 'WP';
         }
@@ -698,14 +638,7 @@
                 updateMapDisplay(data.map_name);
                 loadMapImage(data.map_name);
             }
-            if (data.round_time !== undefined) matchData.round_time = data.round_time;
-            if (data.bomb_time !== undefined) matchData.bomb_time = data.bomb_time;
-            if (data.bomb_planted !== undefined) matchData.bomb_planted = data.bomb_planted;
-            if (data.phase) matchData.phase = data.phase;
-            if (data.round_number) matchData.round_number = data.round_number;
-            if (data.team_score !== undefined) matchData.team_score = data.team_score;
-            if (data.enemy_score !== undefined) matchData.enemy_score = data.enemy_score;
-            if (data.stats) matchData.stats = data.stats;
+            if (data.local_team !== undefined) matchData.local_team = data.local_team;
             if (data.local_player) matchData.local_player = data.local_player;
 
             // Update UI
@@ -715,36 +648,37 @@
 
         // ========== UPDATE UI ==========
         function updateUI() {
-            // Scores
-            elements.ctScore.textContent = matchData.team_score;
-            elements.tScore.textContent = matchData.enemy_score;
-
-            // Round info
-            elements.roundNumber.textContent = matchData.round_number || '?';
-
-            // Timer
-            const time = matchData.bomb_planted ? matchData.bomb_time : matchData.round_time;
-            const minutes = Math.floor(time / 60);
-            const seconds = Math.floor(time % 60);
-            elements.roundTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            elements.roundTime.classList.toggle('bomb', matchData.bomb_planted);
-
-            // Stats
-            const stats = matchData.stats || {};
-            elements.statKills.textContent = stats.kills || 0;
-            elements.statDeaths.textContent = stats.deaths || 0;
-            elements.statAssists.textContent = stats.assists || 0;
-            elements.statMVP.textContent = stats.mvp || 0;
-
-            // Player lists
+            // Player lists (only thing left to update)
             updatePlayerLists();
         }
 
         function updatePlayerLists() {
+            // Deduplicate by entity index (same player arriving via multiple classes)
+            const seen = new Set();
+            const deduped = [];
+            for (const p of matchData.players) {
+                const idx = p.index;
+                if (idx === undefined || idx === null) {
+                    deduped.push(p);
+                    continue;
+                }
+                if (seen.has(idx)) {
+                    // Keep the local-flagged one if duplicate exists
+                    const prev = deduped.find(x => x.index === idx);
+                    if (prev && p.is_local && !prev.is_local) {
+                        const i = deduped.indexOf(prev);
+                        deduped[i] = p;
+                    }
+                    continue;
+                }
+                seen.add(idx);
+                deduped.push(p);
+            }
+
             const ctList = [];
             const tList = [];
 
-            matchData.players.forEach(player => {
+            deduped.forEach(player => {
                 if (player.is_team) {
                     ctList.push(player);
                 } else {
@@ -765,24 +699,155 @@
 
             elements.ctPlayers.innerHTML = ctList.map(p => createPlayerCardHTML(p, 'ct')).join('');
             elements.tPlayers.innerHTML = tList.map(p => createPlayerCardHTML(p, 't')).join('');
+
+            // Kick off avatar loading for any new SteamIDs (server fetches via XML)
+            refreshAvatars(deduped);
+        }
+
+        // ========== AVATAR HELPERS ==========
+        // Generate color from string (deterministic hash)
+        function stringToColor(str) {
+            if (!str) return { bg: '#2a2a4a', fg: '#aaa' };
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const hue = Math.abs(hash) % 360;
+            return {
+                bg: `hsl(${hue}, 45%, 35%)`,
+                fg: `hsl(${hue}, 70%, 80%)`
+            };
+        }
+
+        // Get display letters from SteamID (last 2 uppercase chars, or "?" for bots)
+        function getAvatarLetters(player) {
+            if (player.is_bot) return '🤖';
+            const sid = player.steamid || '';
+            if (!sid || sid === '0' || sid === 'BOT') return '?';
+            // If SteamID64 (17 digits), take last 2 digits; if STEAM_0:X:Y, take from Y
+            let numeric = sid;
+            const match = sid.match(/^STEAM_[0-9]:([0-9]):([0-9]+)$/);
+            if (match) {
+                numeric = match[1] + match[2];
+            }
+            // Take last 2 alphanumeric chars
+            const cleaned = numeric.replace(/[^a-zA-Z0-9]/g, '');
+            if (cleaned.length === 0) return '?';
+            return cleaned.slice(-2).toUpperCase();
+        }
+
+        // Convert any SteamID format to SteamID64 (for profile URLs)
+        function toSteamID64(sid) {
+            if (!sid) return '';
+            sid = sid.trim();
+            if (/^7656\d{13}$/.test(sid)) return sid;
+            const m = sid.match(/^STEAM_[0-9]:([0-9]):([0-9]+)$/);
+            if (m) {
+                const y = parseInt(m[1]);
+                const z = parseInt(m[2]);
+                return (BigInt(76561197960265728) + BigInt(z * 2 + y)).toString();
+            }
+            const u = sid.match(/^\[U:1:(\d+)\]$/);
+            if (u) return (BigInt(76561197960265728) + BigInt(u[1])).toString();
+            return sid;
+        }
+
+        // ========== Avatar loading (no API key required) ==========
+        // Server endpoint /avatars fetches real avatar URLs via Steam profile XML scraping.
+        const avatarUrlCache = new Map(); // steamid64 -> url string
+        let avatarFetchPromise = null;
+        let avatarFetchPending = new Set();
+
+        async function fetchAvatarsFromServer(steamids) {
+            if (!steamids || steamids.length === 0) return;
+            const idsParam = steamids.join(',');
+            try {
+                const res = await fetch(`/avatars?steamids=${encodeURIComponent(idsParam)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                let count = 0;
+                for (const [sid, info] of Object.entries(data)) {
+                    if (info && (info.avatarfull || info.avatarmedium || info.avatar)) {
+                        avatarUrlCache.set(sid, info.avatarfull || info.avatarmedium || info.avatar);
+                        count++;
+                    }
+                }
+                if (count > 0) console.log(`[Avatar] Loaded ${count} avatars`);
+            } catch (e) {
+                console.log('[Avatar] Fetch failed:', e.message);
+            }
+        }
+
+        // Debounced avatar refresh: called each WS update if any steamid is missing/expired
+        function refreshAvatars(players) {
+            const toFetch = [];
+            for (const p of players) {
+                if (p.is_bot) continue;
+                const sid = p.steamid || '';
+                if (!sid || sid === '0' || sid === 'BOT') continue;
+                const sid64 = toSteamID64(sid);
+                if (!sid64 || !/^7656\d{13}$/.test(sid64)) continue;
+                if (!avatarUrlCache.has(sid64)) toFetch.push(sid64);
+            }
+            if (toFetch.length === 0) return;
+            // Deduplicate
+            const unique = [...new Set(toFetch)];
+            // Throttle: only one fetch in-flight at a time, batch every 1.5s
+            if (avatarFetchPromise) return;
+            avatarFetchPromise = new Promise((resolve) => {
+                setTimeout(async () => {
+                    await fetchAvatarsFromServer(unique);
+                    avatarFetchPromise = null;
+                    resolve();
+                }, 1500);
+            });
+        }
+
+        // Build avatar HTML (letter fallback + optional real img)
+        function buildAvatarHTML(player) {
+            const isBot = player.is_bot === 1 || !player.steamid || player.steamid === '0';
+            const sid = player.steamid || '';
+            const letters = getAvatarLetters(player);
+            const color = stringToColor(isBot ? 'bot' : sid);
+            const teamClass = player.is_team ? 't-team' : 'ct-team';
+            const botClass = isBot ? 'is-bot' : '';
+
+            let imgTag = '';
+            if (!isBot && sid) {
+                const sid64 = toSteamID64(sid);
+                const realUrl = avatarUrlCache.get(sid64);
+                if (realUrl) {
+                    imgTag = `<img src="${realUrl}" crossorigin="anonymous" referrerpolicy="no-referrer" alt="">`;
+                }
+            }
+
+            const letterSpan = `<span class="avatar-letter">${letters}</span>`;
+
+            return `<div class="player-avatar ${teamClass} ${botClass}" style="background:${isBot ? '' : color.bg};color:${color.fg}" data-sid="${sid}">
+                ${imgTag}
+                ${letterSpan}
+            </div>`;
+        }
+
+        // Build Steam profile link
+        function buildSteamLinkHTML(player) {
+            if (player.is_bot === 1 || !player.steamid || player.steamid === '0') return '';
+            const sid64 = toSteamID64(player.steamid);
+            return `<a href="https://steamcommunity.com/profiles/${sid64}" target="_blank" class="steam-link" title="Open Steam profile">🔗</a>`;
         }
 
         function createPlayerCardHTML(player, team) {
-            const hp = player.hp || 0;
-            const hpClass = hp > 66 ? '' : hp > 33 ? 'medium' : 'low';
             const weapon = getWeaponCode(player.weapon);
+            const avatarHTML = buildAvatarHTML(player);
+            const steamLinkHTML = buildSteamLinkHTML(player);
 
             return `
                 <div class="player-card ${!player.is_alive ? 'dead' : ''} ${player.is_local ? 'local' : ''}">
-                    <div class="player-avatar">${weapon}</div>
+                    ${avatarHTML}
                     <div class="player-info">
-                        <div class="player-name">${player.name || 'Player'}</div>
+                        <div class="player-name">${player.name || 'Player'} ${!player.is_alive ? '<span class="dead-marker">💀 DEAD</span>' : ''} ${steamLinkHTML}</div>
                         <div class="player-weapon">${player.weapon || 'Unknown'}</div>
                     </div>
-                    <div class="player-hp-bar">
-                        <div class="player-hp-fill ${hpClass}" style="width: ${hp}%"></div>
-                    </div>
-                    <span class="player-hp-text">${hp}</span>
                 </div>
             `;
         }
@@ -943,15 +1008,12 @@
         }
 
         function drawPlayers(ctx, canvas) {
-            const debugInfo = document.getElementById('debugInfo');
-            const localPlayer = matchData.players.find(p => p.is_local);
-            
-            // Show debug info
-            if (localPlayer && debugInfo) {
-                debugInfo.innerHTML = `pos_x:${radarConfig.pos_x}<br>pos_y:${radarConfig.pos_y}<br>scale:${radarConfig.scale}<br>rotate:${radarConfig.rotate}<br>gameX:${localPlayer.x?.toFixed(0)}<br>gameY:${localPlayer.y?.toFixed(0)}`;
-            }
-            
+            const seen = new Set();
             matchData.players.forEach(player => {
+                if (player.index !== undefined && player.index !== null) {
+                    if (seen.has(player.index)) return;
+                    seen.add(player.index);
+                }
                 if (!player.x || !player.y) return;
 
                 const pos = gameToCanvas(player.x, player.y);
@@ -966,7 +1028,7 @@
                 if (player.is_local) {
                     color = '#00ff88';
                     glowColor = 'rgba(0, 255, 136, 0.5)';
-                    radius = 8;
+                    radius = 7;
                 } else if (player.is_team) {
                     color = '#3b82f6';
                     glowColor = 'rgba(59, 130, 246, 0.5)';
@@ -988,22 +1050,6 @@
                 ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
                 ctx.fillStyle = player.is_alive ? color : 'rgba(100, 100, 100, 0.3)';
                 ctx.fill();
-
-                // Direction indicator for local player
-                if (player.is_local && player.angle && player.is_alive) {
-                    const angleRad = (player.angle * Math.PI) / 180;
-                    const lineLength = radius + 12;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(pos.x, pos.y);
-                    ctx.lineTo(
-                        pos.x + Math.sin(angleRad) * lineLength,
-                        pos.y - Math.cos(angleRad) * lineLength
-                    );
-                    ctx.strokeStyle = '#00ff88';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                }
             });
         }
 
@@ -1028,18 +1074,6 @@
                     startHTTPPolling();
                 }
             }, 3000);
-
-            // Update timers
-            setInterval(() => {
-                if (matchData.round_time > 0) {
-                    if (matchData.bomb_planted) {
-                        matchData.bomb_time = Math.max(0, matchData.bomb_time - 1);
-                    } else {
-                        matchData.round_time = Math.max(0, matchData.round_time - 1);
-                    }
-                    updateUI();
-                }
-            }, 1000);
         }
 
         // Start

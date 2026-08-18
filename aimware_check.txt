@@ -191,7 +191,7 @@
             return udp_socket:SendTo(CONFIG.server_ip, CONFIG.server_port, json_str)
         end)
 
-        -- 若发送失败，销毁旧 socket，下次重建（修复换图后句柄失效）
+        -- ?????????????? socket????????????????????????
         if not ok then
             print("[Radar] Socket send failed, resetting: " .. tostring(size))
             udp_socket = nil
@@ -240,7 +240,7 @@
             end
         end)
 
-        -- CS2 method 2: try CCSTeam entities (older CS:GO style — may still work in CS2)
+        -- CS2 method 2: try CCSTeam entities (older CS:GO style ??may still work in CS2)
         if t_score == 0 and ct_score == 0 then
             pcall(function()
                 local teams = entities.FindByClass("CCSTeam")
@@ -682,12 +682,12 @@ pcall(function()
 
     callbacks.Register("Draw", "RadarUpdate", function()
         -- ==========================================
-        -- 永不死掉的保护外壳：换图报错不会注销回调
+        -- ??????????????????????????????
         -- ==========================================
         local ok, err = pcall(function()
             local now = globals.RealTime() or 0
 
-            -- 初始化 UDP (第一次执行时)
+            -- ?????UDP (?????????)
             if not udp_init_done then
                 udp_init_done = true
                 test_time = now + 1
@@ -695,7 +695,7 @@ pcall(function()
                 init_udp()
             end
 
-            -- 发送测试包 (1秒后)
+            -- ???????? (1???)
             if udp_socket and not udp_test_done and now > test_time then
                 udp_test_done = true
                 local test_data = '{"players": [{"name": "TestPlayer"}], "map_name": "test_map"}'
@@ -711,18 +711,17 @@ pcall(function()
 
             if not CONFIG.enabled then return end
 
-            -- 换图安全守卫：Loading/主菜单期间跳过整个 tick
-            -- Aimware Lua 没有 IsConnected/IsInGame，仅靠 GetMapName() 判断
+            -- ???????????oading/??????????????tick
+            -- Aimware Lua ??? IsConnected/IsInGame?????GetMapName() ???
             local guard_map = pcall(function() return engine.GetMapName() end) and engine.GetMapName() or nil
             if not guard_map or guard_map == "" then
                 return
             end
 
-            -- 节流（带负值修正，防止换图后 CurTime/RealTime 重置导致永远不发送）
+            -- ??????????????????????CurTime/RealTime ???????????????
             local cur_t = globals.CurTime() or now
             if cur_t < last_time then
-                -- 时间倒退（换图重置），强制校准
-                last_time = cur_t
+                -- ????????????????????????                last_time = cur_t
             end
             if cur_t - last_time < CONFIG.update_interval then return end
             last_time = cur_t
@@ -732,7 +731,7 @@ pcall(function()
                 return
             end
 
-            -- 即时调试信息（只在首次检测到玩家时打印一次）
+            -- ?????????????????????????????????
             if not debug_printed then
                 debug_printed = true
                 print("[Radar] Local player detected!")
@@ -917,7 +916,7 @@ pcall(function()
         end
     end)
     
-    -- 获取本地玩家的真实数据用于 local_player
+    -- ????????????????????local_player
     local local_player_data = {
         x = 0, y = 0, z = 0, 
         view_x = view_angles.x, 
@@ -958,9 +957,15 @@ pcall(function()
         local_player = local_player_data,
         local_team = my_team,
         map_name = map,
-        -- Score / round / timer: not exposed on this aimware build, omit from payload.
-        bomb_planted = false,
-        phase = nil,
+        round_time = round_time,
+        bomb_time = bomb_time,
+        bomb_planted = bomb_planted,
+        phase = phase,
+        round_number = round_number,
+        ct_score = ct_score,
+        t_score = t_score,
+        team_score = team_score,
+        enemy_score = enemy_score,
         bomb_position = nil,
         smoke_positions = {},
         bomb_site = nil,
@@ -976,14 +981,13 @@ pcall(function()
         end) -- end of pcall body
 
         if not ok then
-            -- 报错被吞掉，但回调不会被注销
+            -- ?????????????????????
             print("[Radar Guard Error]: " .. tostring(err))
         end
 end)
 
     -- ==========================================
--- 换图事件守卫：清空错误缓存、刷新 debug 状态
--- ==========================================
+-- ?????????????????????????debug ????-- ==========================================
 callbacks.Register("FireGameEvent", "RadarGameEvent", function(event)
         local ok, err = pcall(function()
             if not event then return end
@@ -992,14 +996,13 @@ callbacks.Register("FireGameEvent", "RadarGameEvent", function(event)
 
             if name == "game_newmap" or name == "game_start" or name == "round_start" then
                 print("[Radar] Event " .. name .. " - resetting state...")
-                -- 重置调试计数器
-                last_debug_counter = nil
+                -- ???????????                last_debug_counter = nil
                 debug_printed = nil
                 udp_test_done = nil
                 test_time = (globals.RealTime() or 0) + 1
-                -- 重置节流时间戳（防止换图后 CurTime 重置造成负值卡死）
+                -- ????????????????????CurTime ??????????????
                 last_time = globals.CurTime() or 0
-                -- 销毁旧 socket，下次发送时自动重建
+                -- ????? socket???????????????
                 udp_socket = nil
                 udp_init_done = false
             end
@@ -1017,7 +1020,7 @@ end)
 
     function radar_status()
         print("========================================")
-        print(" Web Radar 状态")
+        print(" Web Radar ????)
         print("========================================")
         print("  Enabled: " .. (CONFIG.enabled and "Yes" or "No"))
         print("  Update Interval: " .. CONFIG.update_interval .. "s")
@@ -1043,3 +1046,4 @@ end)
     print("[Radar] Script loaded (UDP mode)")
     print("[Radar] Server: " .. CONFIG.server_ip .. ":" .. CONFIG.server_port)
     print("[Radar] Auto-test will run in 1 second...")
+
