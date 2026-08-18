@@ -1,19 +1,19 @@
-# CS2 Web Radar 设置指南
+# CS2 Web Radar Setup Guide
 
-> 当前架构：**Aimware Lua → UDP → Node.js Server → WebSocket → 浏览器雷达**
+> Current architecture: **Aimware Lua → UDP → Node.js Server → WebSocket → Browser Radar**
 
-## 快速设置 (5分钟)
+## Quick Setup (5 minutes)
 
-### 第一步：启动服务器
+### Step 1 — Start the server
 
-双击运行 `ServerLauncher.bat`，或手动 PowerShell 运行：
+Double-click `ServerLauncher.bat`, or run from PowerShell:
 
 ```powershell
 cd "c:\Users\joeis\OneDrive\桌面\Aimware Lua\web_radar"
 node server.js
 ```
 
-启动后会看到：
+On startup you should see:
 
 ```
 [Radar] UDP listening on 0.0.0.0:12345
@@ -21,108 +21,107 @@ node server.js
 [Radar] HTTP server running on http://0.0.0.0:8080
 ```
 
-- HTTP 端口 `8080` —— 雷达网页
-- WebSocket 端口 `8765` —— 实时推送
-- UDP 端口 `12345` —— 接收 Lua 数据
+- HTTP port `8080` — radar web UI
+- WebSocket port `8765` — real-time push
+- UDP port `12345` — receives Lua data
 
 ---
 
-### 第二步：打开雷达网页
+### Step 2 — Open the radar page
 
-浏览器 (Chrome / Edge) 访问：
+Open Chrome / Edge and visit:
 
 ```
 http://localhost:8080
 ```
 
-> GitHub Pages 公共 demo（不需本地服务器，但只展示静态界面）：
-> https://mingyiu.github.io/WebRader/
+> Static demo (no server required): https://mingyiu.github.io/WebRader/
 
-应该看到圆形雷达界面（地图为底，实时显示玩家）。
+You should see the radar interface with a map background and live player dots.
 
 ---
 
-### 第三步：加载 Lua 脚本到 Aimware
+### Step 3 — Load the Lua script into Aimware
 
-1. 启动 CS2 并进入服务器
-2. 打开 Aimware 的 Lua 编辑器
-3. 加载 `aimware_client.lua` 一个即可
+1. Launch CS2 and join any server
+2. Open Aimware's Lua editor
+3. Load `aimware_client.lua` (no `test_loader.lua` needed)
 
 ```lua
--- Aimware 控制台
+-- Aimware console
 lua_load aimware_client.lua
 ```
 
-> 修改脚本后用 `lua_reload()` 热重载，不需要重启 CS2。
+> After editing the script, use `lua_reload()` to hot-reload — no need to restart CS2.
 
 ---
 
-### 第四步：测试
+### Step 4 — Verify
 
-进入 CS2 任意对局，浏览器雷达应该实时显示：
+Join a CS2 match and you should see on the radar:
 
-- **你自己**：绿色圆点 + 名字
-- **队友**：蓝色圆点 + 名字（淡蓝字）
-- **敌人**：红色圆点 + 名字（淡红字）
-- **死亡玩家**：灰色半透明
+- **You**: green dot + name
+- **Teammates**: blue dots + name (light blue text)
+- **Enemies**: red dots + name (light red text)
+- **Dead players**: hidden from the map, still listed in the side panels with a 💀 marker
 
-控制台看到 `[Radar] Sent #N: X players` 表示 Aimware 端正常推数据。
+A console message like `[Radar] Sent #N: X players` confirms the Lua client is pushing data.
 
 ---
 
-## 修改代码后重新加载
+## Reloading After Edits
 
-| 端 | 命令 |
-|---|---|
+| Component | Command |
+|-----------|---------|
 | Aimware Lua | `lua_reload()` |
-| 雷达网页 | `Ctrl + F5` 强刷 |
-| Node.js 服务器 | `Ctrl + C` 停掉再 `node server.js` |
+| Radar page  | `Ctrl + F5` (hard refresh) |
+| Node.js server | `Ctrl + C` to stop, then `node server.js` |
 
 ---
 
-## 常见问题
+## Troubleshooting
 
-### Q: 服务器启动报 "node 不是内部或外部命令"
-**A:** 没装 Node.js，去 https://nodejs.org/ 装 LTS 版。装完后重开终端。
+### Q: Server fails with "node is not recognized"
+**A:** Node.js is not installed. Get the LTS build from https://nodejs.org/, then reopen the terminal.
 
-### Q: 第一次运行 npm install 很慢 / 失败
-**A:** 切到国内镜像：
+### Q: First `npm install` is very slow or fails
+**A:** Switch to a faster mirror:
 ```powershell
 npm config set registry https://registry.npmmirror.com
 ```
-然后删除 `node_modules` 重新跑 `npm install`。
+Then delete `node_modules` and re-run `npm install`.
 
-### Q: 浏览器显示 "Cannot connect"
+### Q: Browser shows "Cannot connect"
 **A:**
-- 确认服务器已启动（终端还活着）
-- 检查端口 8080 / 8765 是否被占用
-- 浏览器 F12 看 Console 错误
+- Make sure the server terminal is still running.
+- Check that ports 8080 / 8765 are not in use by another process.
+- Open browser DevTools (F12) and inspect the Console for errors.
 
-### Q: 雷达有画面但没玩家
+### Q: Radar shows the map but no players
 **A:**
-- 确认 `aimware_client.lua` 已加载（控制台输入 `lua_reload()` 看是否有错误）
-- 必须在游戏对局里（大厅不会推数据）
-- 控制台应持续输出 `[Radar] Sent #N: X players`
-- 如果 `X = 0`，Aimbot 没找到任何 `C_CSPlayerPawn` —— 升级 Aimware 版本
+- Make sure `aimware_client.lua` is loaded. Run `lua_reload()` and check for errors.
+- You must be in an active match (lobby does not push data).
+- The console should continuously log `[Radar] Sent #N: X players`.
+- If `X = 0`, Aimware cannot find any `C_CSPlayerPawn`. Try a newer Aimware version.
 
-### Q: Lua 脚本报 `attempt to call a nil value`
-**A:** Aimware 版本太旧不支持该 API。当前 `aimware_client.lua` 需要 Aimware V6/V7。
+### Q: Lua script errors with "attempt to call a nil value"
+**A:** Your Aimware version is too old. The current `aimware_client.lua` requires Aimware V6 or V7.
 
 ---
 
-## 端口说明
+## Ports
 
-| 端口 | 协议 | 方向 | 配置位置 |
-|---|---|---|---|
+| Port | Protocol | Direction | Configurable in |
+|------|----------|-----------|----------------|
 | 8080 | HTTP | Server → Browser | `server.js` |
 | 8765 | WebSocket | Server → Browser | `server.js` |
-| 12345 | UDP | Lua → Server | `server.js` + `aimware_client.lua` 的 `CONFIG` |
+| 12345 | UDP | Lua → Server | `server.js` + `aimware_client.lua` (`CONFIG`) |
 
-修改 `aimware_client.lua` 顶部的 `CONFIG` 块可改目标端口：
+Change the target port by editing the `CONFIG` block at the top of `aimware_client.lua`:
 
 ```lua
 local CONFIG = {
-    update_interval = 0.033,  -- 秒 (~30 FPS)
+    update_interval = 0.033,  -- seconds (~30 FPS)
     server_ip = "127.0.0.1",
     server_port = 12345,
 }
@@ -130,34 +129,34 @@ local CONFIG = {
 
 ---
 
-## 项目文件说明
+## File Reference
 
-| 文件 | 作用 | 必需? |
-|---|---|---|
-| `server.js` | Node.js 中转（UDP 收 + WebSocket 发 + HTTP 静态） | ✅ |
-| `radar.html` | 雷达主页面 | ✅ |
-| `index.html` | GitHub Pages 入口（重定向到 `radar.html`） | ✅ |
-| `coordinate_tool.html` | 坐标调试工具 | ✅ |
-| `map_configs.js` | 地图坐标配置（pos_x/pos_y/scale/rotate） | ✅ |
-| `image/{map}.png` | 地图图片资源 | ✅ |
-| `aimware_client.lua` | Aimware 客户端 Lua 脚本 | ✅（本地用） |
-| `ServerLauncher.bat` | Windows 一键启动服务器 | 推荐 |
-| `aimware_check.txt` | Aimware API 探测输出（排查用） | 排查用 |
-| `probe*.lua` | Aimware API 探测脚本（排查用） | 排查用 |
+| File | Purpose | Required? |
+|------|---------|-----------|
+| `server.js` | Node.js relay (UDP in + WebSocket out + HTTP static) | ✅ |
+| `radar.html` | Main radar page | ✅ |
+| `index.html` | GitHub Pages entry (redirects to `radar.html`) | ✅ |
+| `coordinate_tool.html` | Coordinate calibration tool | ✅ |
+| `map_configs.js` | Map coordinate config (pos_x / pos_y / scale / rotate) | ✅ |
+| `image/{map}.png` | Map images | ✅ |
+| `aimware_client.lua` | Aimware Lua client script | ✅ (local use) |
+| `ServerLauncher.bat` | Windows one-click launcher | Recommended |
+| `aimware_check.txt` | Aimware API probe output | Diagnostic |
+| `probe*.lua` | Aimware API probe scripts | Diagnostic |
 
 ---
 
-## 架构图
+## Architecture
 
 ```
-┌─────────────�    UDP 12345      ┌──────────────────┐    WebSocket 8765    ┌─────────────┐
+┌─────────────┐    UDP 12345      ┌──────────────────┐    WebSocket 8765    ┌─────────────┐
 │   CS2       │ ────────────────→ │ Node.js          │ ───────────────────→ │  Browser    │
 │ + Aimware   │                   │ server.js        │                      │ radar.html  │
 │ aimware_    │                   │                  │ ←─── HTTP 8080 ───── │             │
-│ client.lua  │                   │ (UDP/WS/HTTP)    │    (静态文件 +       │             │
+│ client.lua  │                   │ (UDP/WS/HTTP)    │    (static files +   │             │
 └─────────────┘                   └──────────────────┘     polling fallback) └─────────────┘
 ```
 
-- **延迟**：~1-5ms (WebSocket 实时)
-- **更新频率**：~30 FPS
-- **降级**：若 WS 连不上，浏览器会切到 HTTP polling（兜底）
+- **Latency**: ~1–5 ms (WebSocket real-time)
+- **Update rate**: ~30 FPS
+- **Fallback**: if the WebSocket fails to connect, the browser switches to HTTP polling automatically.
