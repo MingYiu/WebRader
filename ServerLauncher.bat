@@ -4,7 +4,7 @@ cd /d "%~dp0"
 
 echo.
 echo  ============================================================
-echo           CS2 Web Radar Server v2.0 (Node.js)
+echo           CS2 Web Radar Server (Node.js)
 echo  ============================================================
 echo.
 echo  WebSocket Real-time Mode (~30 FPS)
@@ -32,17 +32,24 @@ echo  [1/3] Checking dependencies...
 if not exist "node_modules" (
     echo         First run, installing dependencies...
     npm install
+) else (
+    echo         node_modules OK
 )
 
 echo.
 echo  [2/3] Starting server...
 echo.
-echo  Open browser and visit:
-echo    - Radar page:     http://localhost:8080
-echo    - Debug tool:     http://localhost:8080/coordinate_tool.html
+echo  Local URLs:
+echo    - Radar page:      http://localhost:8080
+echo    - Coordinate tool: http://localhost:8080/coordinate_tool.html
 echo.
-echo  WebSocket port: ws://localhost:8765
-echo  UDP port:       127.0.0.1:12345
+echo  Online demo (GitHub Pages):
+echo    - https://mingyiu.github.io/WebRader/
+echo.
+echo  Ports:
+echo    - HTTP:      8080  (browser access)
+echo    - WebSocket: 8765  (real-time push)
+echo    - UDP:       12345 (Lua client -> server)
 echo.
 echo  Press Ctrl+C to stop server
 echo.

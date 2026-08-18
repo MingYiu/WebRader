@@ -1016,6 +1016,9 @@
                 }
                 if (!player.x || !player.y) return;
 
+                // Hide dead players from the map view (lists still show them)
+                if (player.is_alive === 0) return;
+
                 const pos = gameToCanvas(player.x, player.y);
 
                 // Check bounds
@@ -1050,6 +1053,21 @@
                 ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
                 ctx.fillStyle = player.is_alive ? color : 'rgba(100, 100, 100, 0.3)';
                 ctx.fill();
+
+                // Name label above player
+                const name = player.name || 'Unknown';
+                ctx.font = 'bold 10px "Segoe UI", Arial, sans-serif';
+                const textWidth = ctx.measureText(name).width;
+                const labelX = pos.x - textWidth / 2;
+                const labelY = pos.y - radius - 6;
+
+                // Background pill
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+                ctx.fillRect(labelX - 4, labelY - 11, textWidth + 8, 13);
+
+                // Text
+                ctx.fillStyle = player.is_local ? '#00ff88' : (player.is_team ? '#93c5fd' : '#fca5a5');
+                ctx.fillText(name, labelX, labelY);
             });
         }
 
