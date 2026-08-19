@@ -32,6 +32,7 @@
             width: 280px;
             min-width: 280px;
             max-width: 280px;
+            flex-shrink: 0;
             background: linear-gradient(135deg, rgba(15, 15, 25, 0.95) 0%, rgba(10, 10, 18, 0.98) 100%);
             padding: 15px;
             display: flex;
@@ -39,6 +40,7 @@
             border-right: 2px solid #2a2a3a;
             overflow-y: auto;
             overflow-x: hidden;
+            max-height: 100vh;
         }
 
         .side-panel.right {
@@ -398,23 +400,210 @@
         }
 
         /* ========== RESPONSIVE ========== */
-        @media (max-width: 1200px) {
+
+        /* ---- Tablet ---- */
+        @media (max-width: 1100px) {
             .side-panel {
-                width: 240px;
+                width: 200px;
+                min-width: 200px;
+                max-width: 200px;
             }
             .radar-wrapper {
-                max-width: 700px;
-                max-height: 700px;
+                max-width: min(600px, 100%);
+                max-height: min(600px, 100%);
+            }
+            .player-name {
+                font-size: 12px;
             }
         }
 
-        @media (max-width: 900px) {
+        /* ---- Small tablet (hide labels) ---- */
+        @media (max-width: 860px) {
             .side-panel {
-                width: 200px;
+                width: 160px;
+                min-width: 160px;
+                max-width: 160px;
+                padding: 10px 8px;
             }
             .radar-wrapper {
-                max-width: 500px;
-                max-height: 500px;
+                max-width: min(480px, 100%);
+                max-height: min(480px, 100%);
+            }
+            .panel-header {
+                margin-bottom: 10px;
+                padding-bottom: 6px;
+            }
+            .team-name {
+                font-size: 12px;
+                letter-spacing: 1px;
+            }
+            .player-card {
+                padding: 7px 8px;
+                margin-bottom: 6px;
+                gap: 7px;
+            }
+            .player-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 11px;
+            }
+            .player-name {
+                font-size: 11px;
+            }
+            .player-weapon {
+                font-size: 9px;
+            }
+        }
+
+        /* ---- Mobile: stack layout ---- */
+        @media (max-width: 640px) {
+            body {
+                overflow: auto;
+            }
+
+            .main-container {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            /* Radar first, then tabs for teams */
+            .center-panel {
+                order: 1;
+            }
+
+            .side-panel.left {
+                order: 2;
+                width: 100%;
+                max-width: 100%;
+                min-width: unset;
+                border-right: none;
+                border-top: 2px solid #2a2a3a;
+                border-bottom: 2px solid #2a2a3a;
+                max-height: none;
+                overflow-y: visible;
+            }
+
+            .side-panel.right {
+                order: 3;
+                width: 100%;
+                max-width: 100%;
+                min-width: unset;
+                border-left: none;
+                border-top: 2px solid #2a2a3a;
+                max-height: none;
+                overflow-y: visible;
+            }
+
+            /* Hide panel headers on mobile (show team tab bar instead) */
+            .panel-header {
+                display: none;
+            }
+
+            /* Top bar compact */
+            .top-bar {
+                padding: 8px 12px;
+                gap: 8px;
+            }
+            .map-name {
+                font-size: 13px;
+            }
+            .info-value {
+                font-size: 18px;
+            }
+
+            /* Radar container */
+            .radar-container {
+                padding: 10px;
+            }
+            .radar-wrapper {
+                max-width: min(100%, 400px);
+                max-height: min(100%, 400px);
+                border-radius: 8px;
+            }
+
+            /* Bottom bar compact */
+            .bottom-bar {
+                padding: 6px 12px;
+            }
+            .mode-indicator {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+
+            /* Players in horizontal scroll row on mobile */
+            .side-panel > div {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .player-card {
+                width: calc(50% - 3px);
+                min-width: 0;
+                margin-bottom: 0;
+            }
+
+            .player-avatar {
+                width: 28px;
+                height: 28px;
+                font-size: 10px;
+                flex-shrink: 0;
+            }
+
+            .player-name {
+                font-size: 11px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+
+            .dead-marker {
+                font-size: 8px;
+                padding: 1px 4px;
+            }
+
+            /* Steam link hidden on mobile (no room) */
+            .steam-link {
+                display: none;
+            }
+
+            .player-weapon {
+                font-size: 9px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        /* ---- Small mobile ---- */
+        @media (max-width: 400px) {
+            .top-bar {
+                padding: 6px 10px;
+            }
+            .map-name {
+                font-size: 11px;
+                letter-spacing: 1px;
+            }
+            .info-value {
+                font-size: 16px;
+            }
+            .connection-status {
+                font-size: 10px;
+                gap: 5px;
+            }
+            .status-dot {
+                width: 6px;
+                height: 6px;
+            }
+            .radar-wrapper {
+                max-width: min(100%, 320px);
+                max-height: min(100%, 320px);
+                border-radius: 6px;
+            }
+            .player-card {
+                width: 100%;
             }
         }
     </style>
@@ -512,7 +701,6 @@
 
         let ws = null;
         let wsConnected = false;
-        let lastUpdateTime = 0;
         let frameId = null;
 
         // ========== DOM ELEMENTS ==========
@@ -625,33 +813,8 @@
             }
         }
 
-        // ========== FALLBACK: HTTP POLLING ==========
-        async function fetchData() {
-            try {
-                const response = await fetch(HTTP_URL);
-                if (response.ok) {
-                    const data = await response.json();
-                    handleGameData(data);
-                    updateConnectionStatus(true);
-                }
-            } catch (e) {
-                console.error('[HTTP] Fetch error:', e);
-                updateConnectionStatus(false);
-            }
-        }
-
-        function startHTTPPolling() {
-            console.log('[HTTP] Falling back to polling mode');
-            elements.modeIndicator.textContent = 'HTTP Polling';
-            elements.modeIndicator.classList.remove('websocket');
-            setInterval(fetchData, 100); // 10 FPS fallback
-        }
-
         // ========== DATA HANDLER ==========
         function handleGameData(data) {
-            console.log('[Radar] handleGameData called:', JSON.stringify(data).substring(0, 200));
-            
-            // Update match data
             if (data.players) matchData.players = data.players;
             if (data.map_name) {
                 matchData.map_name = data.map_name;
@@ -661,9 +824,7 @@
             if (data.local_team !== undefined) matchData.local_team = data.local_team;
             if (data.local_player) matchData.local_player = data.local_player;
 
-            // Update UI
             updateUI();
-            lastUpdateTime = performance.now();
         }
 
         // ========== UPDATE UI ==========
@@ -794,7 +955,7 @@
                 }
                 if (count > 0) console.log(`[Avatar] Loaded ${count} avatars`);
             } catch (e) {
-                console.log('[Avatar] Fetch failed:', e.message);
+                console.warn('[Avatar] Fetch failed:', e);
             }
         }
 
@@ -1102,16 +1263,9 @@
             // Start render loop
             render();
 
-            // Set up resize handler (this will call resizeCanvas -> render)
+            // Set up resize handler
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
-
-            // Fallback: if no WS connection in 3 seconds, use HTTP polling
-            setTimeout(() => {
-                if (!wsConnected) {
-                    startHTTPPolling();
-                }
-            }, 3000);
         }
 
         // Start

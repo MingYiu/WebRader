@@ -49,8 +49,8 @@ const MAPS = {
     'de_ancient': {
         name: 'Ancient',
         file: 'de_ancient_radar.png',
-        pos_x: -2953,
-        pos_y: 2164,
+        pos_x: -2950,
+        pos_y: 2180,
         scale: 5.0,
         rotate: 0,
         width: 1024,
