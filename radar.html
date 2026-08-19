@@ -476,7 +476,22 @@
 
     <script>
         // ========== CONFIG ==========
-        const WS_URL = 'ws://127.0.0.1:8765';
+        // Support dynamic WS URL:
+        //   ?ws=wss://...    → explicit override
+        //   ?ngrok=1         → auto-derive wss:// from current host (for ngrok deployments)
+        //   ngrok domain     → auto-detect wss:// from current host (ngrok-free.app / ngrok.io)
+        //   default          → local dev (ws://127.0.0.1:8765)
+        const urlParams = new URLSearchParams(window.location.search);
+        let WS_URL;
+        if (urlParams.has('ws')) {
+            WS_URL = urlParams.get('ws');
+        } else if (urlParams.has('ngrok') || /ngrok-free\.app|ngrok\.io/i.test(window.location.hostname)) {
+            const host = window.location.hostname;
+            const wsPort = urlParams.get('ngrok_port') || (window.location.port ? window.location.port : '443');
+            WS_URL = `wss://${host}:${wsPort}`;
+        } else {
+            WS_URL = 'ws://127.0.0.1:8765';
+        }
         const HTTP_URL = '/data';  // Fallback
 
         // ========== STATE ==========
@@ -568,6 +583,7 @@
 
         // ========== WEBSOCKET CONNECTION ==========
         function connectWebSocket() {
+            console.log('[WS] Attempting to connect →', WS_URL);
             try {
                 ws = new WebSocket(WS_URL);
 
@@ -859,7 +875,7 @@
         function updateConnectionStatus(connected) {
             elements.statusDot.classList.toggle('connected', connected);
             elements.statusDot.classList.toggle('disconnected', !connected);
-            elements.statusText.textContent = connected ? 'Connected' : 'Disconnected';
+            elements.statusText.textContent = connected ? 'Connected to ' + WS_URL : 'Disconnected';
         }
 
         // ========== MAP HANDLING ==========
